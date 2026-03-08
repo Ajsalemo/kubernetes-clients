@@ -1,4 +1,5 @@
-from kubernetes import config
+from kubernetes import config, client
+from src.listallpods import listAllPods
 import logging, sys
 
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +14,13 @@ except config.ConfigException as e:
     logger.error("Failed to load kubeconfig: %s", e)
     sys.exit(1)
     
+# create the api client
+# pass this in to any functions
+v1 = client.CoreV1Api()
 
 def main():
-    print("Hello from python!")
+    # list all pods in the cluster
+    listAllPods(v1)
 
 
 if __name__ == "__main__":
