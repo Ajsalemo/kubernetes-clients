@@ -3,10 +3,29 @@ import sys
 
 from fastapi import FastAPI
 from kubernetes import client, config
-
+from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class Resources(BaseModel):
+    requests: dict | None = None
+    limits: dict | None = None
+
+
+class Container(BaseModel):
+    name: str
+    image: str
+    resources: Resources | None = None
+
+
+class Deployment(BaseModel):
+    name: str
+    namespace: str = "default"
+    replicas: int = 1
+    containers: list[Container]
+
 
 app = FastAPI()
 
@@ -76,14 +95,15 @@ def get_pod(pod: str, namespace: str = "default"):
             logger.error(
                 f" Error retrieving pod '{pod}' in namespace: {namespace}: {e}")
             return {"message": f"Error retrieving pod '{pod}' in namespace: {namespace}: {e}"}
-        
+
 
 @app.delete("/pod/delete/{pod}")
 def delete_pod(pod: str, namespace: str = "default"):
     logger.info(f" Deleting pod {pod} in the namespace: {namespace}")
     try:
         v1.delete_namespaced_pod(pod, namespace)
-        logger.info(f" Pod '{pod}' deleted successfully in namespace: {namespace}")
+        logger.info(
+            f" Pod '{pod}' deleted successfully in namespace: {namespace}")
         return {"message": f"Pod '{pod}' deleted successfully in namespace: {namespace}"}
     except client.exceptions.ApiException as e:
         if e.status == 404:
@@ -93,3 +113,46 @@ def delete_pod(pod: str, namespace: str = "default"):
             logger.error(
                 f" Error deleting pod '{pod}' in namespace: {namespace}: {e}")
             return {"message": f"Error deleting pod '{pod}' in namespace: {namespace}: {e}"}
+
+
+@app.post("/deployment/create")
+def create_deployment(deployment: Deployment):
+    logger.info(
+        f" Creating deployment {deployment.name} in the namespace: {deployment.namespace}")
+    try:
+        # Define the deployment spec
+        deployment_spec = client.V1Deployment(
+            metadata=client.V1ObjectMeta(name=deployment.name),
+            spec=client.V1DeploymentSpec(
+                replicas=deployment.replicas,
+                selector={'matchLabels': {'app': deployment.name}},
+                template=client.V1PodTemplateSpec(
+                    metadata=client.V1ObjectMeta(
+                        labels={'app': deployment.name}),
+                    spec=client.V1PodSpec(containers=[
+                        client.V1Container(
+                            name=c.name,
+                            image=c.image,
+                            resources=client.V1ResourceRequirements(
+                                requests=c.resources.requests if c.resources else None,
+                                limits=c.resources.limits if c.resources else None,
+                            ) if c.resources else None,
+                        ) for c in deployment.containers
+                    ])
+                )
+            )
+        )
+
+        # Create the deployment
+        apps_v1 = client.AppsV1Api()
+        apps_v1.create_namespaced_deployment(
+            namespace=deployment.namespace,
+            body=deployment_spec
+        )
+    except client.exceptions.ApiException as e:
+        logger.error(
+            f" Error creating deployment '{deployment.name}' in namespace: {deployment.namespace}: {e}")
+        return {"message": f"Error creating deployment '{deployment.name}' in namespace: {deployment.namespace}: {e}"}
+    logger.info(
+        f" Deployment '{deployment.name}' created successfully in namespace: {deployment.namespace}")
+    return {"message": f"Deployment '{deployment.name}' created successfully in namespace: {deployment.namespace}"}
