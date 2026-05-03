@@ -12,11 +12,10 @@ const server: FastifyInstance = Fastify({
 
 // GET route with query parameter validation
 server.get<{ Querystring: { namespace: string } }>('/pods/list/all', async (request, reply) => {
-    const { namespace } = request.query;
-    // Check if namespace is provided
+    let { namespace } = request.query;
+    // If namespace is empty, default to "default"
     if (!namespace) {
-        reply.status(400).send({ error: 'Namespace query parameter is required' });
-        return;
+        namespace = "default";
     }
     const n = { namespace } as k8s.CoreV1ApiListNamespacedPodRequest;
     const res = await k8sApi.listNamespacedPod(n);
