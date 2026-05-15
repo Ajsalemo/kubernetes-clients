@@ -1,6 +1,46 @@
 import * as k8s from "@kubernetes/client-node";
 import Fastify, { FastifyInstance } from "fastify";
 
+type V1ResourceRequirements = {
+    requests?: { [key: string]: string };
+    limits?: { [key: string]: string };
+}
+
+type V1Container = {
+    name: string;
+    image: string;
+    resources: V1ResourceRequirements;
+}
+
+type V1TemplateSpec = {
+    metadata: {
+        labels: { [key: string]: string };
+    };
+    spec: {
+        containers: V1Container[];
+    };
+}
+
+type V1Spec = {
+    replicas: number;
+    selector: V1Selector;
+    template: V1TemplateSpec;
+}
+
+type V1Selector = {
+    matchLabels: { [key: string]: string };
+}
+
+type V1Metadata = {
+    name: string;
+    namespace: string | "default";
+}
+
+type DeploymentSpec = {
+    metadata: V1Metadata;
+    spec: V1Spec;
+}
+
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 
@@ -46,6 +86,51 @@ server.get<{ Querystring: { pod: string, namespace?: string } }>("/pod/get", asy
     const p = { name: pod, namespace } as k8s.CoreV1ApiReadNamespacedPodRequest;
     const getPod = await k8sApi.readNamespacedPod(p);
     return { pod: getPod.spec };
+});
+
+// HTTP POST - create a pod in a namespace
+// Request URL shape: /pod/create?namespace=<namespace>
+server.post<{ Querystring: { namespace?: string }, Body: { metadata: V1Metadata, spec: V1Spec } }>("/pod/create", async (request) => {
+    const { metadata, spec } = request.body;
+    console.log("Received deployment spec:", { metadata, spec });
+    let { namespace } = request.query;
+    // If namespace is empty, default to "default"
+    if (!namespace) {
+        namespace = "default";
+    }
+    // Create a pod manifest based on the deployment spec
+    const podManifest: k8s.V1Deployment = {
+        metadata: {
+            name: metadata.name,
+            namespace: metadata.namespace
+        },
+        spec: {
+            replicas: parseInt(spec.replicas.toString(), 10),
+            selector: {
+                matchLabels: {
+                    app: metadata.name
+                }
+            },
+            template: {
+                metadata: {
+                    labels: {
+                        app: metadata.name
+                    }
+                },
+                spec: {
+                    containers: spec.template.spec.containers.map(container => ({
+                        name: container.name,
+                        image: container.image,
+                        resources: container.resources
+                    }))
+                }
+            }
+        }
+    };
+    // Same as line 20, fit the shape of the below interface that CoreV1ApiCreateNamespacedPodRequest is
+    const p = { namespace, body: podManifest } as k8s.CoreV1ApiCreateNamespacedPodRequest;
+    const createPod = await k8sApi.createNamespacedPod(p);
+    return { pod: createPod.spec };
 });
 
 // Start server
