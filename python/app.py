@@ -156,3 +156,28 @@ def create_deployment(deployment: Deployment):
     logger.info(
         f" Deployment '{deployment.name}' created successfully in namespace: {deployment.namespace}")
     return {"message": f"Deployment '{deployment.name}' created successfully in namespace: {deployment.namespace}"}
+
+
+@app.delete("/deployment/delete/{deployment}")
+def delete_deployment(deployment: str, namespace: str = "default"):
+    logger.info(
+        f" Deleting deployment {deployment} in the namespace: {namespace}")
+    try:
+        apps_v1 = client.AppsV1Api()
+        apps_v1.delete_namespaced_deployment(
+            name=deployment,
+            namespace=namespace,
+            body=client.V1DeleteOptions()
+        )
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            logger.info(
+                f" Deployment '{deployment}' not found in namespace: {namespace}")
+            return {"message": f"Deployment '{deployment}' not found in namespace: {namespace}"}
+        else:
+            logger.error(
+                f" Error deleting deployment '{deployment}' in namespace: {namespace}: {e}")
+            return {"message": f"Error deleting deployment '{deployment}' in namespace: {namespace}: {e}"}
+    logger.info(
+        f" Deployment '{deployment}' deleted successfully in namespace: {namespace}")
+    return {"message": f"Deployment '{deployment}' deleted successfully in namespace: {namespace}"}

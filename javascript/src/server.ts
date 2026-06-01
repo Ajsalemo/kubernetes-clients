@@ -133,6 +133,25 @@ server.post<{ Querystring: { namespace?: string }, Body: { metadata: V1Metadata,
     return { pod: createPod.spec };
 });
 
+// HTTP DELETE - delete a pod
+// Request URL shape: /pod/delete?pod=<podname>&namespace=<namespace>
+server.delete<{ Querystring: { pod: string, namespace?: string } }>("/pod/delete", async (request, response) => {
+    const { pod } = request.query;
+    let { namespace } = request.query;
+    // If no pod is provided then return an HTTP 400
+    if (!pod) {
+        return response.status(400).send({ error: "Pod name is required" });
+    }
+    // If namespace is empty, default to "default"
+    if (!namespace) {
+        namespace = "default";
+    }
+    // Same as line 20, fit the shape of the below interface that CoreV1ApiDeleteNamespacedPodRequest is
+    const p = { name: pod, namespace } as k8s.CoreV1ApiDeleteNamespacedPodRequest;
+    const deletePod = await k8sApi.deleteNamespacedPod(p);
+    return { message: "Pod deleted successfully" };
+});
+
 // Start server
 const start = async () => {
     try {
