@@ -36,11 +36,6 @@ type V1Metadata = {
     namespace: string | "default";
 }
 
-type DeploymentSpec = {
-    metadata: V1Metadata;
-    spec: V1Spec;
-}
-
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 
