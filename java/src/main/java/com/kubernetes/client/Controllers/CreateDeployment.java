@@ -3,7 +3,11 @@ package com.kubernetes.client.Controllers;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +20,7 @@ import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentSpec;
+import io.kubernetes.client.openapi.models.V1LabelSelector;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodTemplateSpec;
@@ -26,16 +31,20 @@ public class CreateDeployment {
         @PostMapping("/deployment/create")
         public ResponseEntity<Object> createDeployment(@RequestParam(defaultValue = "default") String namespace,
                         @RequestBody com.kubernetes.client.Models.V1Pod v1Pod) throws IOException {
+                // Create a logger instance
+                Logger logger = LoggerFactory.getLogger(CreateDeployment.class);
                 // Logic to create a deployment
                 ApiClient client = Config.defaultClient();
                 Configuration.setDefaultApiClient(client);
                 AppsV1Api api = new AppsV1Api();
 
                 try {
+                        // Labels for selector and template
+                        Map<String, String> labels = new HashMap<>();
+                        labels.put("app", v1Pod.getSpec().getTemplate().getMetadata().getLabels()
+                                        .getApp());
                         V1ObjectMeta metadata = new V1ObjectMeta()
-                                        .name(v1Pod.getMetadata().getName())
-                                        .labels(Collections.singletonMap("app",
-                                                        v1Pod.getMetadata().getName()));
+                                        .name(v1Pod.getMetadata().getName());
 
                         // Define the container
                         V1Container[] container = new V1Container[v1Pod.getSpec().getTemplate().getSpec()
@@ -48,7 +57,8 @@ public class CreateDeployment {
                                                 .image(c.getImage())
                                                 .ports(Collections.singletonList(
                                                                 new io.kubernetes.client.openapi.models.V1ContainerPort()
-                                                                                .containerPort(80)));
+                                                                                .containerPort(c.getPorts()
+                                                                                                .getContainerPort())));
                         }
 
                         // Define the Pod spec
@@ -60,15 +70,21 @@ public class CreateDeployment {
                                         .apiVersion("apps/v1")
                                         .kind("Deployment")
                                         .metadata(metadata)
-                                        .spec(new V1DeploymentSpec().template(new V1PodTemplateSpec().spec(podSpec)));
+                                        .spec(new V1DeploymentSpec()
+                                                        .replicas(v1Pod.getSpec().getReplicas())
+                                                        .selector(new V1LabelSelector().matchLabels(labels))
+                                                        .template(new V1PodTemplateSpec()
+                                                                        .metadata(new V1ObjectMeta().labels(labels))
+                                                                        .spec(podSpec)));
 
                         // Create the deployment using the provided spec
                         api.createNamespacedDeployment(
                                         namespace,
-                                        deployment);
-                        System.out.println("Deployment created successfully in namespace: " + namespace);
+                                        deployment)
+                                        .execute();
+                        logger.info("Deployment created successfully in namespace: {}", namespace);
                 } catch (Exception e) {
-                        e.printStackTrace();
+                        logger.error("Error creating deployment: {}", e.getMessage(), e);
                         return ResponseEntity.status(500).body("Error creating deployment: " + e.getMessage());
                 }
 

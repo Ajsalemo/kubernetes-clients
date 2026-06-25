@@ -11,6 +11,7 @@ public class Container {
     private String name;
     private String image;
     private Resources resources;
+    private Ports ports;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
@@ -36,6 +37,14 @@ public class Container {
 
     public void setResources(Resources resources) {
         this.resources = resources;
+    }
+
+    public Ports getPorts() {
+        return ports;
+    }
+
+    public void setPorts(Ports ports) {
+        this.ports = ports;
     }
 
     @JsonAnyGetter
