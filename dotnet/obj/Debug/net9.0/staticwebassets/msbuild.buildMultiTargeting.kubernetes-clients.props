@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/kubernetes-clients.props" />
-</Project>
