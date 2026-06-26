@@ -1,0 +1,6 @@
+@kubernetes_clients_HostAddress = http://localhost:5005
+
+GET {{kubernetes_clients_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

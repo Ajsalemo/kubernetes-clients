@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "GwMRSChWYy0=",
+  "success": true,
+  "projectFilePath": "/home/ajssalemo/code/kubernetes-clients/dotnet/kubernetes-clients.csproj",
+  "expectedPackageFiles": [
+    "/home/ajssalemo/.nuget/packages/fractions/7.3.0/fractions.7.3.0.nupkg.sha512",
+    "/home/ajssalemo/.nuget/packages/kubernetesclient/19.0.2/kubernetesclient.19.0.2.nupkg.sha512",
+    "/home/ajssalemo/.nuget/packages/microsoft.aspnetcore.openapi/9.0.3/microsoft.aspnetcore.openapi.9.0.3.nupkg.sha512",
+    "/home/ajssalemo/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512",
+    "/home/ajssalemo/.nuget/packages/yamldotnet/16.3.0/yamldotnet.16.3.0.nupkg.sha512"
+  ],
+  "logs": []
+}
