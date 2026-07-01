@@ -1,17 +1,27 @@
+using k8s;
+using k8s.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace kubernetes_clients.Controllers
 {
-    // Route: /api/getpod
-    [Route("[controller]")]
+    // Route: /pod/list/all/{namespace}
+    [Route("/[controller]")]
     [ApiController]
-    public class GetPodController : ControllerBase
+    public class GetPodController(Kubernetes client) : ControllerBase
     {
-        [HttpGet("/pod/list/all/{namespace}")]
+        private readonly Kubernetes _client = client;
+
+        [HttpGet("/pod/list/all/{namespace?}")]
         public ActionResult<string> GetPod(string @namespace)
         {
-            Console.WriteLine($"Namespace: {@namespace}");
-            return Ok("t");
+            // If no namespace is provided, default to "default"
+            if (string.IsNullOrEmpty(@namespace))
+            {
+                @namespace = "default";
+            }
+
+            var pods = _client.CoreV1.ListNamespacedPod(@namespace);
+            return Ok(pods.Items.Select(p => p.Metadata.Name).ToList());
         }
     }
 }

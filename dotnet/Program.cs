@@ -1,6 +1,12 @@
 using k8s;
 
 var builder = WebApplication.CreateBuilder(args);
+// Load from the default kubeconfig on the machine.
+var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
+// Use the config object to create a client.
+var client = new Kubernetes(config);
+// Dependency injection for the Kubernetes client
+builder.Services.AddSingleton(client);
 // Add services for controllers
 builder.Services.AddControllers();
 // Add services to the container.
@@ -8,10 +14,6 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
-// Load from the default kubeconfig on the machine.
-var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
-// Use the config object to create a client.
-var client = new Kubernetes(config);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -21,6 +23,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapControllers();
 
 
 app.Run();
