@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace kubernetes_clients.Controllers
 {
-    // Route: /pod/list/all/{namespace}
+    // Route: /pod/get/{namespace}/{name}
     [Route("/[controller]")]
     [ApiController]
-    public class GetPodController(Kubernetes client) : ControllerBase
+    public class GetSpecificPodController(Kubernetes client) : ControllerBase
     {
         private readonly Kubernetes _client = client;
-
-        [HttpGet("/pod/list/all/{namespace?}")]
-        public ActionResult<string> GetPod(string @namespace)
+        // GET: /pod/get?namespace={namespace}&name={name}
+        [HttpGet("/pod/get/")]
+        public ActionResult<string> GetSpecificPod(string @namespace, string name)
         {
             // If no namespace is provided, default to "default"
             if (string.IsNullOrEmpty(@namespace))
@@ -19,8 +19,8 @@ namespace kubernetes_clients.Controllers
                 @namespace = "default";
             }
 
-            var pods = _client.CoreV1.ListNamespacedPod(@namespace);
-            return Ok(pods.Items.Select(p => p.Metadata.Name).ToList());
+            var pod = _client.CoreV1.ReadNamespacedPod(name, @namespace);
+            return Ok(pod);
         }
     }
 }
