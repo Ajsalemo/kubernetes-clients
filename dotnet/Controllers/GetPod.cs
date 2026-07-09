@@ -6,9 +6,10 @@ namespace kubernetes_clients.Controllers
     // Route: /pod/list/all/{namespace}
     [Route("/[controller]")]
     [ApiController]
-    public class GetPodController(Kubernetes client) : ControllerBase
+    public class GetPodController(Kubernetes client, ILogger<GetPodController> logger) : ControllerBase
     {
         private readonly Kubernetes _client = client;
+        private readonly ILogger<GetPodController> _logger = logger;
 
         [HttpGet("/pod/list/all/{namespace?}")]
         public ActionResult<string> GetPod(string @namespace)
@@ -20,6 +21,7 @@ namespace kubernetes_clients.Controllers
             }
 
             var pods = _client.CoreV1.ListNamespacedPod(@namespace);
+            _logger.LogInformation($"Retrieved {pods.Items.Count} pods in namespace '{@namespace}'.");
             return Ok(pods.Items.Select(p => p.Metadata.Name).ToList());
         }
     }

@@ -5,6 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
 // Use the config object to create a client.
 var client = new Kubernetes(config);
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+});
 // Dependency injection for the Kubernetes client
 builder.Services.AddSingleton(client);
 // Add services for controllers
