@@ -43,12 +43,14 @@ namespace kubernetes_clients.Controllers
                         },
                         Spec = new k8s.Models.V1PodSpec
                         {
-                            Containers = deployment.Spec.Template.Spec.Containers.Select(c => new k8s.Models.V1Container
+                            Containers = deployment.Spec.Template.Spec.Containers.Select(static c => new k8s.Models.V1Container
                             {
                                 Name = c.Name,
-                                Image = c.Image
-                                // TODO - fix the usage of `Select` here - its returning an error due to it cant infer types
-                                // Ports = c.Ports?.Select(p => new k8s.Models.V1ContainerPort { ContainerPort = p }).ToList()
+                                Image = c.Image,
+                                Ports = c.Ports.Select(static p => new k8s.Models.V1ContainerPort
+                                {
+                                    ContainerPort = p.ContainerPort
+                                }).ToList()
                             }).ToList()
                         }
                     }
