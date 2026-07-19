@@ -61,8 +61,7 @@ namespace kubernetes_clients.Controllers
 
             _client.CreateNamespacedDeployment(v1Deployment, @namespace);
 
-            // Implementation for creating a deployment goes here
-            return Ok();
+            return Ok(new { Message = $"Creating deployment with name: {deployment.Metadata.Name}" });
         }
 
     }
