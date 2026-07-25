@@ -48,6 +48,11 @@ func main() {
 	http.HandleFunc("/pod/get", func(w http.ResponseWriter, r *http.Request) {
 		home.GetPod(w, r, log, client)
 	})
+	// See https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go
+	// You can prefix HTTP verbs before the route
+	http.HandleFunc("DELETE /pod/delete", func(w http.ResponseWriter, r *http.Request) {
+		home.DeletePod(w, r, log, client)
+	})
 
 	log.Info("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
