@@ -45,6 +45,10 @@ func main() {
 		home.GetAllPods(w, r, log, client)
 	})
 
+	http.HandleFunc("/deployment/create", func(w http.ResponseWriter, r *http.Request) {
+		home.CreateDeploymentHandler(w, r, log, client)
+	})
+
 	http.HandleFunc("/pod/get", func(w http.ResponseWriter, r *http.Request) {
 		home.GetPod(w, r, log, client)
 	})
