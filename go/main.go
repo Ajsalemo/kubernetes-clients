@@ -44,8 +44,9 @@ func main() {
 	http.HandleFunc("/pods/list/all", func(w http.ResponseWriter, r *http.Request) {
 		home.GetAllPods(w, r, log, client)
 	})
-
-	http.HandleFunc("/deployment/create", func(w http.ResponseWriter, r *http.Request) {
+	// See https://stackoverflow.com/questions/15240884/how-can-i-handle-http-requests-of-different-methods-to-in-go
+	// You can prefix HTTP verbs before the route
+	http.HandleFunc("POST /deployment/create", func(w http.ResponseWriter, r *http.Request) {
 		home.CreateDeploymentHandler(w, r, log, client)
 	})
 

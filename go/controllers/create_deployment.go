@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -14,6 +15,14 @@ func CreateDeploymentHandler(w http.ResponseWriter, r *http.Request, log *zap.Su
 
 	log.Info("Creating deployment...")
 	// Add your deployment creation logic here
+	decoder := json.NewDecoder(r.Body)
+
+	var deploymentSpec map[string]interface{}
+	if err := decoder.Decode(&deploymentSpec); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	log.Infof("Received deployment spec: %+v", deploymentSpec)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Deployment created successfully"))
