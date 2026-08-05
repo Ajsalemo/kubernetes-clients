@@ -33,7 +33,6 @@ func CreateDeploymentHandler(w http.ResponseWriter, r *http.Request, log *zap.Su
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	log.Infof("Received deployment spec: %+v", deploymentSpec)
 
 	pod := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -42,7 +41,17 @@ func CreateDeploymentHandler(w http.ResponseWriter, r *http.Request, log *zap.Su
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: int32Ptr(deploymentSpec.Spec.Replicas),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": deploymentSpec.Spec.Selector.MatchLabels.App,
+				},
+			},
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": deploymentSpec.Spec.Template.Metadata.Labels.App,
+					},
+				},
 				Spec: corev1.PodSpec{
 					Containers: func() []corev1.Container {
 						containers := []corev1.Container{}
